@@ -28,15 +28,17 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
   .app{max-width:640px;margin:0 auto;padding:1.5rem 1rem 3rem;}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;}
+  .header{margin-bottom:1.5rem;}
+  .header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:0.5rem;}
+  .header-btns{display:flex;gap:6px;flex-shrink:0;}
   h1{font-size:22px;font-weight:600;margin-bottom:0.2rem;}
   .subtitle{font-size:14px;color:var(--text-sec);}
-  .lang-btn{background:var(--surface);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;color:var(--text-sec);font-family:var(--font);white-space:nowrap;}
+  .lang-btn{background:var(--surface);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 10px;font-size:12px;cursor:pointer;color:var(--text-sec);font-family:var(--font);white-space:nowrap;}
   .lang-btn:hover{background:var(--surface-1);}
+  input[type=text],input[type=number],input[type=date]{width:100%;max-width:100%;box-sizing:border-box;padding:8px 10px;font-size:14px;font-family:var(--font);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
   .card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
   label{font-size:13px;color:var(--text-sec);display:block;margin-bottom:4px;}
-  input[type=text],input[type=number],input[type=date]{width:100%;padding:8px 10px;font-size:14px;font-family:var(--font);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);outline:none;}
-  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
   .sec{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
   .metric{background:var(--surface-1);border-radius:var(--radius);padding:0.75rem 1rem;}
@@ -99,15 +101,17 @@
 <div class="toast" id="toast"></div>
 
 <div class="header">
-  <div>
-    <h1>🍽️ <span id="t-title">TrinkSplit</span></h1>
-    <p class="subtitle" id="t-subtitle"></p>
-    <p style="font-size:11px;color:var(--text-muted);margin-top:3px;" id="t-credit"></p>
+  <div class="header-top">
+    <div>
+      <h1>🍽️ <span id="t-title">TrinkSplit</span></h1>
+    </div>
+    <div class="header-btns">
+      <button class="lang-btn" onclick="openAbout()">ℹ️ <span id="t-about-label">Über TrinkSplit</span></button>
+      <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🌐 EN</button>
+    </div>
   </div>
-  <div style="display:flex;gap:8px;">
-    <button class="lang-btn" onclick="openAbout()" id="t-about-btn">ℹ️ <span id="t-about-label">Über TrinkSplit</span></button>
-    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🌐 English</button>
-  </div>
+  <p class="subtitle" id="t-subtitle"></p>
+  <p style="font-size:11px;color:var(--text-muted);margin-top:3px;" id="t-credit"></p>
 </div>
 
 <div class="tabs">
@@ -249,7 +253,7 @@ const LANG = {
     title:'TrinkSplit', subtitle:'Trinkgeld aufteilen, schneller als dein Taschenrechner.',
     credit:'Erstellt mit Claude Sonnet 4.6 von MNA',
     github:'Finde mich auf GitHub',
-    langBtn:'🌐 English', tabCalc:'Berechnung', tabHistory:'Verlauf', tabSettings:'Einstellungen',
+    langBtn:'🌐 EN', tabCalc:'Berechnung', tabHistory:'Verlauf', tabSettings:'Einstellungen',
     datum:'Datum', trinkgeld:'Trinkgeld gesamt (€)', kuechetax:'Küche Tax (%)',
     personalSec:'Personal & Dienstzeiten', modeTime:'🕐 Dienstzeiten (Von/Bis)', modeHours:'⏱ Stunden direkt eingeben',
     hint:'Zeiten eingeben als: 1730, 17:30 oder 830', addPerson:'+ Person hinzufügen',
@@ -286,7 +290,7 @@ const LANG = {
     title:'TrinkSplit', subtitle:'Distribute tips by hours worked, faster than your phone calculator.',
     credit:'Made using Claude Sonnet 4.6 by MNA',
     github:'Find me on GitHub',
-    langBtn:'🌐 Deutsch', tabCalc:'Calculate', tabHistory:'History', tabSettings:'Settings',
+    langBtn:'🌐 DE', tabCalc:'Calculate', tabHistory:'History', tabSettings:'Settings',
     datum:'Date', trinkgeld:'Total tips (€)', kuechetax:'Kitchen tax (%)',
     personalSec:'Staff & Shift Times', modeTime:'🕐 Shift times (from/to)', modeHours:'⏱ Enter hours directly',
     hint:'Enter times as: 1730, 17:30 or 830', addPerson:'+ Add person',
