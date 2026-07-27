@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TrinkSplit</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg:#f5f5f4;--surface:#ffffff;--surface-1:#f5f5f4;
+    --border:rgba(0,0,0,0.1);--border-strong:rgba(0,0,0,0.18);
+    --text:#1c1c1a;--text-sec:#6b6b67;--text-muted:#a0a09c;
+    --accent:#2563eb;--accent-bg:#eff6ff;--accent-border:#bfdbfe;--accent-text:#1d4ed8;
+    --success-bg:#f0fdf4;--success-border:#bbf7d0;--success-text:#15803d;
+    --warn-bg:#fffbeb;--warn-border:#fde68a;--warn-text:#92400e;
+    --radius:8px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'SF Mono','Fira Code',monospace;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1a1a18;--surface:#242422;--surface-1:#2e2e2b;
+      --border:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.18);
+      --text:#f0f0ec;--text-sec:#a0a09c;--text-muted:#6b6b67;
+      --accent:#3b82f6;--accent-bg:#172554;--accent-border:#1e40af;--accent-text:#93c5fd;
+      --success-bg:#052e16;--success-border:#14532d;--success-text:#86efac;
+      --warn-bg:#1c1500;--warn-border:#78350f;--warn-text:#fcd34d;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+  .app{max-width:640px;margin:0 auto;padding:1.5rem 1rem 3rem;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;}
+  h1{font-size:22px;font-weight:600;margin-bottom:0.2rem;}
+  .subtitle{font-size:14px;color:var(--text-sec);}
+  .lang-btn{background:var(--surface);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:pointer;color:var(--text-sec);font-family:var(--font);white-space:nowrap;}
+  .lang-btn:hover{background:var(--surface-1);}
+  .card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+  label{font-size:13px;color:var(--text-sec);display:block;margin-bottom:4px;}
+  input[type=text],input[type=number],input[type=date]{width:100%;padding:8px 10px;font-size:14px;font-family:var(--font);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);outline:none;}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .sec{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+  .metric{background:var(--surface-1);border-radius:var(--radius);padding:0.75rem 1rem;}
+  .metric-label{font-size:12px;color:var(--text-sec);margin-bottom:2px;}
+  .metric-val{font-size:20px;font-weight:600;}
+  .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1rem;}
+  .pblock{border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;}
+  .pheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .pname{font-size:14px;font-weight:500;border:none;background:transparent;color:var(--text);width:130px;outline:none;border-bottom:0.5px solid var(--border-strong);padding-bottom:2px;}
+  .srow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;}
+  .slabel{font-size:11px;color:var(--text-sec);background:var(--surface-1);border-radius:4px;padding:2px 7px;display:inline-block;margin-bottom:6px;}
+  .ti{font-family:var(--font-mono);letter-spacing:0.03em;}
+  .ti.ok{border-color:var(--success-border)!important;color:var(--success-text);}
+  .ti.err{border-color:#fca5a5!important;color:#dc2626;}
+  .addbtn{font-size:12px;background:none;border:0.5px dashed var(--border-strong);border-radius:var(--radius);padding:4px 10px;cursor:pointer;color:var(--text-sec);font-family:var(--font);}
+  .addbtn:hover{background:var(--surface-1);}
+  .rmbtn{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;line-height:1;padding:0 2px;}
+  .rmbtn:hover{color:var(--text);}
+  .hbadge{font-size:12px;color:var(--text-sec);background:var(--surface-1);border-radius:var(--radius);padding:3px 8px;white-space:nowrap;}
+  .rrow{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--border);}
+  .rrow:last-child{border-bottom:none;}
+  .pamount{font-weight:600;font-size:15px;white-space:nowrap;margin-left:12px;}
+  .knote{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .addpbtn{width:100%;background:none;border:0.5px dashed var(--border-strong);border-radius:var(--radius);padding:9px;cursor:pointer;color:var(--text-sec);font-size:13px;font-family:var(--font);}
+  .addpbtn:hover{background:var(--surface-1);}
+  .tabs{display:flex;gap:2px;margin-bottom:1rem;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:3px;}
+  .tab{flex:1;padding:7px 4px;font-size:13px;border:none;background:none;cursor:pointer;border-radius:6px;color:var(--text-sec);font-family:var(--font);}
+  .tab.active{background:var(--surface-1);color:var(--text);font-weight:500;border:0.5px solid var(--border);}
+  .exprow{display:flex;gap:8px;flex-wrap:wrap;}
+  .expbtn{display:flex;align-items:center;gap:6px;font-size:13px;padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-family:var(--font);font-weight:500;}
+  .expbtn.xl{background:var(--success-bg);color:var(--success-text);border:0.5px solid var(--success-border);}
+  .expbtn.cp{background:var(--accent-bg);color:var(--accent-text);border:0.5px solid var(--accent-border);}
+  .expbtn:hover{opacity:0.8;}
+  .savebtn{width:100%;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);margin-top:1rem;}
+  .savebtn:hover{opacity:0.9;}
+  .hentry{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);}
+  .hentry:last-child{border-bottom:none;}
+  .hentry:hover .hdate{color:var(--accent);}
+  .hdate{font-size:14px;font-weight:500;}
+  .hmeta{font-size:12px;color:var(--text-sec);margin-top:2px;}
+  .empty{text-align:center;padding:2.5rem;color:var(--text-muted);font-size:14px;}
+  .kuche-total{background:var(--warn-bg);border:0.5px solid var(--warn-border);border-radius:var(--radius);padding:12px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;}
+  .kuche-total-label{font-size:13px;color:var(--warn-text);font-weight:500;}
+  .kuche-total-amount{font-size:18px;font-weight:700;color:var(--warn-text);}
+  .kuche-total-breakdown{font-size:11px;color:var(--warn-text);opacity:0.75;margin-top:2px;}
+  .mode-toggle{display:flex;gap:2px;background:var(--surface-1);border-radius:var(--radius);padding:2px;margin-bottom:12px;}
+  .mode-btn{flex:1;padding:5px 8px;font-size:12px;border:none;background:none;cursor:pointer;border-radius:6px;color:var(--text-sec);font-family:var(--font);}
+  .mode-btn.active{background:var(--surface);color:var(--text);font-weight:500;border:0.5px solid var(--border);}
+  .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);border-radius:var(--radius);padding:9px 20px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;z-index:999;}
+  .toast.show{opacity:1;}
+  @media(max-width:480px){
+    .row2{grid-template-columns:1fr;}
+    .mgrid{grid-template-columns:1fr 1fr;}
+    .mgrid .metric:last-child{grid-column:span 2;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="toast" id="toast"></div>
+
+<div class="header">
+  <div>
+    <h1>🍽️ <span id="t-title">TrinkSplit</span></h1>
+    <p class="subtitle" id="t-subtitle"></p>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:3px;" id="t-credit"></p>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="lang-btn" onclick="openAbout()" id="t-about-btn">ℹ️ <span id="t-about-label">Über TrinkSplit</span></button>
+    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">🌐 English</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('calc')" id="tab-btn-calc">⚖️ <span id="t-tab-calc">Berechnung</span></button>
+  <button class="tab" onclick="switchTab('history')" id="tab-btn-history">📋 <span id="t-tab-history">Verlauf</span></button>
+  <button class="tab" onclick="switchTab('settings')" id="tab-btn-settings">⚙️ <span id="t-tab-settings">Einstellungen</span></button>
+</div>
+
+<!-- BERECHNUNG -->
+<div id="tab-calc">
+  <div class="card">
+    <div class="row2">
+      <div><label id="t-datum">Datum</label><input type="date" id="datum" /></div>
+      <div><label id="t-trinkgeld">Trinkgeld gesamt (€)</label><input type="number" id="trinkgeld" min="0" step="0.01" placeholder="0.00" oninput="calculate()" /></div>
+    </div>
+    <div class="row2">
+      <div><label id="t-kuechetax">Küche Tax (%)</label><input type="number" id="kuechePct" min="0" max="100" step="1" value="0" oninput="calculate()" /></div>
+      <div><div style="font-size:12px;color:var(--text-sec);padding-top:24px;" id="kuecheInfo"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec" id="t-personal-sec">Personal & Dienstzeiten</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-btn-time" onclick="setInputMode('time')" id="t-mode-time">🕐 <span id="t-mode-time-label">Dienstzeiten (Von/Bis)</span></button>
+      <button class="mode-btn" id="mode-btn-hours" onclick="setInputMode('hours')">⏱ <span id="t-mode-hours-label">Stunden direkt eingeben</span></button>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;" id="t-hint">Zeiten eingeben als: 1730, 17:30 oder 830</p>
+    <div id="persons-container"></div>
+    <button class="addpbtn" onclick="addPerson()" id="t-add-person">+ Person hinzufügen</button>
+  </div>
+
+  <div class="card">
+    <div class="mgrid">
+      <div class="metric"><div class="metric-label" id="t-total-hours">Gesamt Stunden</div><div class="metric-val" id="totalHours">–</div></div>
+      <div class="metric"><div class="metric-label" id="t-per-hour">Pro Stunde</div><div class="metric-val" id="perHour">€0,00</div></div>
+      <div class="metric"><div class="metric-label" id="t-service-pool">Service Pool</div><div class="metric-val" id="servicePool">€0,00</div></div>
+    </div>
+    <div class="sec" id="t-auszahlung">Auszahlung</div>
+    <div id="results"></div>
+
+    <div class="kuche-total" id="kuche-total-box" style="display:none;">
+      <div>
+        <div class="kuche-total-label" id="t-kuche-total-label">🍳 Gesamt an Küche auszahlen</div>
+        <div class="kuche-total-breakdown" id="kuche-breakdown"></div>
+      </div>
+      <div class="kuche-total-amount" id="kuche-total-amount">€0,00</div>
+    </div>
+
+    <button class="savebtn" onclick="saveEntry()" id="t-save-btn">💾 Speichern</button>
+  </div>
+
+  <div class="card">
+    <div class="sec" id="t-export-sec">Exportieren</div>
+    <div class="exprow">
+      <button class="expbtn xl" onclick="exportExcel()" id="t-export-xl">📊 Excel (.xlsx)</button>
+      <button class="expbtn cp" onclick="copyForSheets()" id="t-export-sheets">📋 Kopieren für Google Sheets</button>
+    </div>
+    <div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px;">
+      <button class="expbtn" onclick="openImport()" id="t-import-btn" style="background:var(--surface-1);color:var(--text-sec);border:0.5px solid var(--border-strong);width:100%;justify-content:center;">📥 <span id="t-import-label">Aus Zwischenablage importieren</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
+  <div style="background:var(--surface);border-radius:12px;max-width:520px;margin:2rem auto;padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:18px;font-weight:700;">🍽️ TrinkSplit</div>
+      <button class="rmbtn" onclick="closeAbout()" style="font-size:24px;">×</button>
+    </div>
+    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p1"></p>
+    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p2"></p>
+    <div style="background:var(--warn-bg);border:0.5px solid var(--warn-border);border-radius:var(--radius);padding:12px 14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--warn-text);margin-bottom:6px;" id="t-about-rounding-title"></div>
+      <p style="font-size:13px;line-height:1.65;color:var(--warn-text);" id="t-about-p3"></p>
+    </div>
+    <button onclick="closeAbout()" style="width:100%;margin-top:1rem;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-about-close">Schließen</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="text-align:center;padding:2rem 0 1rem;">
+  <a href="https://github.com/meeer-theblackintels" target="_blank" rel="noopener noreferrer"
+    style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);text-decoration:none;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:7px 16px;background:var(--surface);">
+    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    <span id="t-github">Find me on GitHub</span>
+  </a>
+</div>
+
+<!-- IMPORT MODAL -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
+  <div style="background:var(--surface);border-radius:12px;max-width:560px;margin:2rem auto;padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+      <div style="font-size:16px;font-weight:600;" id="t-import-title">Daten importieren</div>
+      <button class="rmbtn" onclick="closeImport()" style="font-size:24px;">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:10px;" id="t-import-desc">Kopierten Export-Text hier einfügen:</p>
+    <textarea id="import-textarea" style="width:100%;height:200px;font-size:13px;font-family:var(--font-mono);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);padding:10px;resize:vertical;outline:none;" placeholder="Strg+V / Cmd+V / Tippen &amp; halten → Einfügen…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button onclick="doImport()" style="flex:1;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-do">Importieren</button>
+      <button onclick="closeImport()" style="padding:10px 16px;font-size:14px;background:var(--surface-1);color:var(--text-sec);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-cancel">Abbrechen</button>
+    </div>
+    <div id="import-error" style="display:none;margin-top:8px;font-size:13px;color:#dc2626;background:#fef2f2;border-radius:var(--radius);padding:8px 12px;"></div>
+  </div>
+</div>
+
+<!-- VERLAUF -->
+<div id="tab-history" style="display:none;">
+  <div class="card">
+    <div class="sec" id="t-history-sec">Gespeicherte Einträge</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- EINSTELLUNGEN -->
+<div id="tab-settings" style="display:none;">
+  <div class="card">
+    <div class="sec" id="t-settings-names-sec">Standard-Personal</div>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:12px;" id="t-settings-names-desc">Diese Namen werden beim Start vorausgefüllt.</p>
+    <div id="default-names"></div>
+    <button class="addbtn" onclick="addDefaultName()" style="margin-top:8px;" id="t-add-default-name">+ Name hinzufügen</button>
+    <button class="savebtn" onclick="saveSettings()" id="t-save-settings">Einstellungen speichern</button>
+  </div>
+  <div class="card">
+    <div class="sec" id="t-settings-kuche-sec">Standard Küche Tax</div>
+    <div style="max-width:200px;">
+      <label id="t-settings-kuche-label">Küche Tax (%)</label>
+      <input type="number" id="defaultKuechePct" min="0" max="100" step="1" value="0" />
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const LANG = {
+  de: {
+    title:'TrinkSplit', subtitle:'Trinkgeld aufteilen, schneller als dein Taschenrechner.',
+    credit:'Erstellt mit Claude Sonnet 4.6 von MNA',
+    github:'Finde mich auf GitHub',
+    langBtn:'🌐 English', tabCalc:'Berechnung', tabHistory:'Verlauf', tabSettings:'Einstellungen',
+    datum:'Datum', trinkgeld:'Trinkgeld gesamt (€)', kuechetax:'Küche Tax (%)',
+    personalSec:'Personal & Dienstzeiten', modeTime:'🕐 Dienstzeiten (Von/Bis)', modeHours:'⏱ Stunden direkt eingeben',
+    hint:'Zeiten eingeben als: 1730, 17:30 oder 830', addPerson:'+ Person hinzufügen',
+    totalHours:'Gesamt Stunden', perHour:'Pro Stunde', servicePool:'Service Pool',
+    auszahlung:'Auszahlung', saveBtn:'💾 Speichern', exportSec:'Exportieren',
+    exportXl:'📊 Excel (.xlsx)', exportSheets:'📋 Kopieren für Google Sheets',
+    historySec:'Gespeicherte Einträge', settingsNamesSec:'Standard-Personal',
+    settingsNamesDesc:'Diese Namen werden beim Start vorausgefüllt.',
+    addDefaultName:'+ Name hinzufügen', saveSettings:'Einstellungen speichern',
+    settingsKucheSec:'Standard Küche Tax', settingsKucheLabel:'Küche Tax (%)',
+    kucheTotalLabel:'🍳 Gesamt an Küche auszahlen', von:'Von', bis:'Bis',
+    dienst:'Dienst', schicht:'Schicht', teildienst:'+ Teildienst hinzufügen',
+    stunden:'Stunden', hoursPlaceholder:'z.B. 7.5', timePlaceholder:'z.B. 1130',
+    kucheInfo:'Küche Tax:', kucheReste:'davon Reste:', kucheGesamt:'Gesamt:',
+    noHistory:'Noch keine Einträge gespeichert.', deleteConfirm:'Diesen Eintrag löschen?',
+    savedToast:'Gespeichert!', copiedToast:'Kopiert! Jetzt in Google Sheets einfügen (Strg+V).',
+    copyFail:'Kopieren fehlgeschlagen.', noDatum:'Bitte Datum eingeben.',
+    settingsSaved:'Einstellungen gespeichert!', excelDownloaded:'Excel-Datei heruntergeladen!',
+    colDate:'Datum', colName:'Name', colShifts:'Dienstzeiten', colHours:'Stunden gearbeitet',
+    colTip:'Trinkgeld (€)', colPerHour:'Trinkgeld pro Stunde (€)', colReste:'Reste → Küche (€)', colKucheTax:'Küche Tax',
+    colRemainder:'Reste (Küche)', colTotal:'TOTAL',
+    importLabel:'Aus Zwischenablage importieren', importTitle:'Daten importieren',
+    importDesc:'Kopierten Export-Text hier einfügen:', importDo:'Importieren', importCancel:'Abbrechen',
+    importOk:'Erfolgreich importiert!', importFail:'Import fehlgeschlagen — stammt der Text aus dem Export?',
+    footer:'Erstellt mit Claude Sonnet 4.6 von MNA',
+    aboutLabel:'Über TrinkSplit',
+    aboutP1:'Der Name setzt sich zusammen aus dem deutschen Wort <strong>Trink</strong>geld und dem englischen Wort <strong>Split</strong>, was so viel wie aufteilen bedeutet. Zusammen beschreiben die beiden Wörter ziemlich genau, wofür diese App gemacht wurde. TrinkSplit verteilt das gemeinsam gesammelte Trinkgeld fair nach geleisteten Arbeitsstunden. Du gibst das Tagestrinkgeld ein, trägst die Dienstzeiten jeder Person ein und TrinkSplit rechnet automatisch aus, wer wie viel bekommt. Wer einen Teildienst hatte, kann beide Schichten separat eingeben. Optional lässt sich ein prozentualer Küchenanteil abziehen, bevor der Rest aufgeteilt wird.',
+    aboutP2:'Das Ergebnis kann als Excel-Datei exportiert oder direkt in Google Sheets eingefügt werden. Alle Einträge werden lokal gespeichert und sind im Verlauf jederzeit abrufbar.',
+    aboutRoundingTitle:'💡 Warum wird auf 0,50 € abgerundet?',
+    aboutP3:'Centgenaue Beträge wie 47,83 € lassen sich in der Praxis kaum sauber auszahlen. TrinkSplit rundet deshalb jeden Betrag auf den nächsten halben Euro ab, also z.B. 47,83 € auf 47,50 €. Die dabei entstehenden Reste werden gesammelt und zusammen mit dem Küchenanteil an die Küche weitergegeben. So geht kein Cent verloren und die Abrechnung bleibt für alle unkompliziert.',
+    aboutClose:'Schließen',
+  },
+  en: {
+    title:'TrinkSplit', subtitle:'Distribute tips by hours worked, faster than your phone calculator.',
+    credit:'Made using Claude Sonnet 4.6 by MNA',
+    github:'Find me on GitHub',
+    langBtn:'🌐 Deutsch', tabCalc:'Calculate', tabHistory:'History', tabSettings:'Settings',
+    datum:'Date', trinkgeld:'Total tips (€)', kuechetax:'Kitchen tax (%)',
+    personalSec:'Staff & Shift Times', modeTime:'🕐 Shift times (from/to)', modeHours:'⏱ Enter hours directly',
+    hint:'Enter times as: 1730, 17:30 or 830', addPerson:'+ Add person',
+    totalHours:'Total hours', perHour:'Per hour', servicePool:'Service pool',
+    auszahlung:'Payout', saveBtn:'💾 Save', exportSec:'Export',
+    exportXl:'📊 Excel (.xlsx)', exportSheets:'📋 Copy for Google Sheets',
+    historySec:'Saved entries', settingsNamesSec:'Default staff',
+    settingsNamesDesc:'These names are pre-filled on start.',
+    addDefaultName:'+ Add name', saveSettings:'Save settings',
+    settingsKucheSec:'Default kitchen tax', settingsKucheLabel:'Kitchen tax (%)',
+    kucheTotalLabel:'🍳 Total to pay to kitchen', von:'From', bis:'To',
+    dienst:'Shift', schicht:'Shift', teildienst:'+ Add split shift',
+    stunden:'Hours', hoursPlaceholder:'e.g. 7.5', timePlaceholder:'e.g. 1130',
+    kucheInfo:'Kitchen tax:', kucheReste:'of which remainders:', kucheGesamt:'Total:',
+    noHistory:'No entries saved yet.', deleteConfirm:'Delete this entry?',
+    savedToast:'Saved!', copiedToast:'Copied! Paste into Google Sheets (Ctrl+V).',
+    copyFail:'Copy failed.', noDatum:'Please enter a date.',
+    settingsSaved:'Settings saved!', excelDownloaded:'Excel file downloaded!',
+    colDate:'Date', colName:'Name', colShifts:'Shift times', colHours:'Hours worked',
+    colTip:'Tip (€)', colPerHour:'Tip per hour (€)', colReste:'Remainders → Kitchen (€)', colKucheTax:'Kitchen tax',
+    colRemainder:'Remainders (kitchen)', colTotal:'TOTAL',
+    importLabel:'Import from clipboard', importTitle:'Import data',
+    importDesc:'Paste your exported text here:', importDo:'Import', importCancel:'Cancel',
+    importOk:'Imported successfully!', importFail:'Import failed — is this text from the export?',
+    footer:'Made using Claude Sonnet 4.6 by MNA',
+    aboutLabel:'About TrinkSplit',
+    aboutP1:'The name combines the German word <strong>Trink</strong>geld, meaning tips, with the English word <strong>Split</strong>, and together they pretty much describe everything this app does. TrinkSplit takes the day\'s pooled tips and splits them fairly based on how long each person actually worked. Enter the total, fill in everyone\'s shift times, and it works out each person\'s share automatically. Split shifts are supported too. You can also set a kitchen percentage that gets deducted before anything is divided.',
+    aboutP2:'The result can be exported as an Excel file or pasted straight into Google Sheets. Every entry is saved locally so you can look back at any previous day in the history tab.',
+    aboutRoundingTitle:'💡 Why round down to €0.50?',
+    aboutP3:'Paying someone exactly €47.83 in cash just doesn\'t work cleanly. TrinkSplit rounds each payout down to the nearest half euro, so €47.83 becomes €47.50. The leftover cents from everyone get pooled together and added on top of the kitchen share at the end. Nothing is lost and handing out the money stays straightforward.',
+    aboutClose:'Close',
+  }
+};
+
+let lang = localStorage.getItem('tk_lang') || 'de';
+let persons = [];
+let inputMode = 'time'; // 'time' or 'hours'
+let settings = { defaultNames:['A','B','C','D','E'], defaultKuechePct:0 };
+let history = [];
+
+function t(key) { return LANG[lang][key] || key; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  const ids = [
+    ['t-title','title'],['t-subtitle','subtitle'],['t-credit','credit'],['lang-btn','langBtn'],
+    ['t-tab-calc','tabCalc'],['t-tab-history','tabHistory'],['t-tab-settings','tabSettings'],
+    ['t-datum','datum'],['t-trinkgeld','trinkgeld'],['t-kuechetax','kuechetax'],
+    ['t-personal-sec','personalSec'],['t-hint','hint'],['t-add-person','addPerson'],
+    ['t-total-hours','totalHours'],['t-per-hour','perHour'],['t-service-pool','servicePool'],
+    ['t-auszahlung','auszahlung'],['t-save-btn','saveBtn'],['t-export-sec','exportSec'],
+    ['t-export-xl','exportXl'],['t-export-sheets','exportSheets'],
+    ['t-history-sec','historySec'],['t-settings-names-sec','settingsNamesSec'],
+    ['t-settings-names-desc','settingsNamesDesc'],['t-add-default-name','addDefaultName'],
+    ['t-save-settings','saveSettings'],['t-settings-kuche-sec','settingsKucheSec'],
+    ['t-settings-kuche-label','settingsKucheLabel'],['t-kuche-total-label','kucheTotalLabel'],
+    ['t-import-label','importLabel'],['t-import-title','importTitle'],
+    ['t-import-desc','importDesc'],['t-import-do','importDo'],['t-import-cancel','importCancel'],
+    ['t-about-label','aboutLabel'],['t-about-p1','aboutP1'],['t-about-p2','aboutP2'],
+    ['t-about-rounding-title','aboutRoundingTitle'],['t-about-p3','aboutP3'],['t-about-close','aboutClose'],
+    ['t-github','github'],
+  ];
+  const htmlIds = ['t-about-p1','t-about-p2','t-about-p3'];
+  ids.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (htmlIds.includes(id)) el.innerHTML = t(key);
+    else el.textContent = t(key);
+  });
+  // mode toggle buttons
+  document.getElementById('mode-btn-time').innerHTML = t('modeTime');
+  document.getElementById('mode-btn-hours').innerHTML = t('modeHours');
+  renderPersons();
+  calculate();
+}
+
+function toggleLang() {
+  lang = lang === 'de' ? 'en' : 'de';
+  localStorage.setItem('tk_lang', lang);
+  applyLang();
+}
+
+function setInputMode(mode) {
+  inputMode = mode;
+  // Update ALL existing persons to the new mode
+  persons.forEach(p => { p.mode = mode; });
+  document.getElementById('mode-btn-time').classList.toggle('active', mode === 'time');
+  document.getElementById('mode-btn-hours').classList.toggle('active', mode === 'hours');
+  document.getElementById('t-hint').style.display = mode === 'time' ? '' : 'none';
+  renderPersons();
+}
+
+function loadData() {
+  try {
+    const s = localStorage.getItem('tk_settings'); if (s) settings = JSON.parse(s);
+    const h = localStorage.getItem('tk_history'); if (h) history = JSON.parse(h);
+  } catch(e) {}
+}
+
+function saveData() {
+  localStorage.setItem('tk_settings', JSON.stringify(settings));
+  localStorage.setItem('tk_history', JSON.stringify(history));
+}
+
+function parseTime(raw) {
+  if (!raw || !raw.trim()) return null;
+  const s = raw.trim().replace(/[.,\s]/g,'');
+  let h, m;
+  if (/^\d{1,2}$/.test(s)) { h=parseInt(s); m=0; }
+  else if (/^\d{3}$/.test(s)) { h=parseInt(s[0]); m=parseInt(s.slice(1)); }
+  else if (/^\d{4}$/.test(s)) { h=parseInt(s.slice(0,2)); m=parseInt(s.slice(2)); }
+  else if (/^\d{1,2}[:\-]\d{2}$/.test(s)) { const p=s.split(/[:\-]/); h=parseInt(p[0]); m=parseInt(p[1]); }
+  else return null;
+  if (h<0||h>23||m<0||m>59) return null;
+  return h*60+m;
+}
+
+function formatParsed(raw) {
+  const mins = parseTime(raw); if (mins===null) return null;
+  const h=Math.floor(mins/60), m=mins%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function calcPersonHours(p) {
+  if (p.mode === 'hours') return parseFloat(p.directHours) || 0;
+  let total = 0;
+  for (const s of p.shifts) {
+    const v=parseTime(s.von), b=parseTime(s.bis);
+    if (v!==null && b!==null && b>v) total += b-v;
+  }
+  return total/60;
+}
+
+function formatHours(h) {
+  const totalMin=Math.round(h*60), hh=Math.floor(totalMin/60), mm=totalMin%60;
+  return mm===0 ? `${hh}h` : `${hh}h ${mm}min`;
+}
+
+function floorHalf(val) { return Math.floor(val*2)/2; }
+
+function renderPersons() {
+  const c = document.getElementById('persons-container');
+  c.innerHTML = '';
+  persons.forEach((p, pi) => {
+    const hours = calcPersonHours(p);
+    const div = document.createElement('div');
+    div.className = 'pblock';
+    const pMode = p.mode || inputMode;
+
+    let inputHtml = '';
+    if (pMode === 'hours') {
+      const hval = p.directHours || '';
+      inputHtml = `<div style="display:flex;align-items:center;gap:12px;">
+        <div style="max-width:180px;">
+          <label>${t('stunden')}</label>
+          <input type="number" min="0" step="0.25" placeholder="${t('hoursPlaceholder')}" value="${hval}"
+            oninput="persons[${pi}].directHours=this.value;calculate();" />
+        </div>
+        <div style="padding-top:20px;font-size:13px;color:var(--text-muted);" id="hbadge-inline-${pi}">${parseFloat(hval)>0?formatHours(parseFloat(hval)):''}</div>
+      </div>`;
+    } else {
+      inputHtml = p.shifts.map((s,si) => {
+        const vc = s.von ? (parseTime(s.von)!==null?'ok':'err') : '';
+        const bc = s.bis ? (parseTime(s.bis)!==null?'ok':'err') : '';
+        const lbl = p.shifts.length>1 ? `${t('schicht')} ${si+1}` : t('dienst');
+        return `<div style="margin-bottom:6px;">
+          <span class="slabel">${lbl}</span>
+          <div class="srow">
+            <div><label>${t('von')}</label><input class="ti ${vc}" type="text" inputmode="numeric" placeholder="${t('timePlaceholder')}" value="${s.von}"
+              oninput="persons[${pi}].shifts[${si}].von=this.value;this.className='ti '+(this.value?(parseTime(this.value)!==null?'ok':'err'):'');calculate();"
+              onblur="normalizeField(this,${pi},${si},'von')" /></div>
+            <div><label>${t('bis')}</label><input class="ti ${bc}" type="text" inputmode="numeric" placeholder="${t('timePlaceholder')}" value="${s.bis}"
+              oninput="persons[${pi}].shifts[${si}].bis=this.value;this.className='ti '+(this.value?(parseTime(this.value)!==null?'ok':'err'):'');calculate();"
+              onblur="normalizeField(this,${pi},${si},'bis')" /></div>
+            <div style="padding-bottom:2px;">${p.shifts.length>1?`<button class="rmbtn" onclick="removeShift(${pi},${si})">×</button>`:''}</div>
+          </div></div>`;
+      }).join('');
+      if (p.shifts.length < 2) inputHtml += `<button class="addbtn" onclick="addShift(${pi})">${t('teildienst')}</button>`;
+    }
+
+    // toggle button per person
+    const otherMode = pMode === 'time' ? 'hours' : 'time';
+    const toggleLabel = pMode === 'time' ? t('modeHours') : t('modeTime');
+
+    div.innerHTML = `
+      <div class="pheader">
+        <input class="pname" type="text" value="${p.name}" placeholder="Name" oninput="persons[${pi}].name=this.value;calculate();" />
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="hbadge" id="hbadge-${pi}">${hours>0?formatHours(hours):'–'}</span>
+          <button class="addbtn" style="font-size:11px;padding:2px 7px;" onclick="persons[${pi}].mode='${otherMode}';renderPersons();">${pMode==='time'?'⏱':'🕐'}</button>
+          ${persons.length>1?`<button class="rmbtn" onclick="removePerson(${pi})">×</button>`:''}
+        </div>
+      </div>
+      ${inputHtml}`;
+    c.appendChild(div);
+  });
+  calculate();
+}
+
+function normalizeField(el, pi, si, field) {
+  const fmt = formatParsed(el.value);
+  if (fmt) { el.value=fmt; persons[pi].shifts[si][field]=fmt; el.className='ti ok'; calculate(); }
+}
+
+function addShift(pi) { persons[pi].shifts.push({von:'',bis:''}); renderPersons(); }
+function removeShift(pi,si) { persons[pi].shifts.splice(si,1); renderPersons(); }
+function addPerson() {
+  persons.push({name:String.fromCharCode(65+persons.length), shifts:[{von:'',bis:''}], mode:inputMode, directHours:''});
+  renderPersons();
+}
+function removePerson(pi) { if(persons.length<=1)return; persons.splice(pi,1); renderPersons(); }
+
+function getPayouts() {
+  const total = parseFloat(document.getElementById('trinkgeld').value)||0;
+  const kuechePct = parseFloat(document.getElementById('kuechePct').value)||0;
+  const kuecheTax = parseFloat((total*kuechePct/100).toFixed(2));
+  const servicePool = parseFloat((total-kuecheTax).toFixed(2));
+  const hoursArr = persons.map(calcPersonHours);
+  const totalHours = hoursArr.reduce((a,b)=>a+b,0);
+  const perHour = totalHours>0 ? servicePool/totalHours : 0;
+  let totalPaid = 0;
+  const payouts = persons.map((p,pi) => {
+    const h = hoursArr[pi];
+    const raw = h*perHour;
+    const rounded = floorHalf(raw);
+    const remainder = parseFloat((raw-rounded).toFixed(2));
+    totalPaid += rounded;
+    return {name:p.name, hours:h, raw, rounded, remainder, shifts:p.shifts, mode:p.mode||inputMode, directHours:p.directHours};
+  });
+  const totalRemainder = parseFloat((servicePool-totalPaid).toFixed(2));
+  const totalKuche = parseFloat((kuecheTax + totalRemainder).toFixed(2));
+  return {total, kuecheTax, servicePool, totalHours, perHour, payouts, totalRemainder, totalKuche};
+}
+
+function calculate() {
+  const {total, kuecheTax, servicePool, totalHours, perHour, payouts, totalRemainder, totalKuche} = getPayouts();
+
+  document.getElementById('kuecheInfo').textContent = kuecheTax>0 ? `${t('kucheInfo')} €${kuecheTax.toFixed(2)}` : '';
+  document.getElementById('servicePool').textContent = `€${servicePool.toFixed(2)}`;
+  document.getElementById('totalHours').textContent = totalHours>0 ? formatHours(totalHours) : '–';
+  document.getElementById('perHour').textContent = `€${perHour.toFixed(2)}`;
+
+  persons.forEach((_,pi) => {
+    const b = document.getElementById(`hbadge-${pi}`);
+    if (b) b.textContent = calcPersonHours(persons[pi])>0 ? formatHours(calcPersonHours(persons[pi])) : '–';
+  });
+
+  const el = document.getElementById('results');
+  el.innerHTML = '';
+  payouts.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'rrow';
+    let desc = '–';
+    if (p.mode === 'hours') {
+      desc = parseFloat(p.directHours)>0 ? formatHours(parseFloat(p.directHours)) : '–';
+    } else {
+      const sd = (p.shifts||[]).filter(s=>parseTime(s.von)!==null&&parseTime(s.bis)!==null&&parseTime(s.bis)>parseTime(s.von)).map(s=>`${formatParsed(s.von)||s.von}–${formatParsed(s.bis)||s.bis}`).join(' + ');
+      desc = sd || '–';
+    }
+    row.innerHTML = `
+      <div>
+        <div style="font-size:14px;font-weight:500;">${p.name||'–'}</div>
+        <div style="font-size:12px;color:var(--text-sec);">${desc} · ${p.hours>0?formatHours(p.hours):'–'}</div>
+      </div>
+      <div class="pamount">${total>0&&p.hours>0?`€${p.rounded.toFixed(2)}`:'–'}</div>`;
+    el.appendChild(row);
+  });
+
+  // Küche total box
+  const kucheBox = document.getElementById('kuche-total-box');
+  if (total > 0 && totalKuche > 0) {
+    kucheBox.style.display = 'flex';
+    document.getElementById('kuche-total-amount').textContent = `€${totalKuche.toFixed(2)}`;
+    let breakdown = [];
+    if (kuecheTax > 0) breakdown.push(`${t('kucheInfo')} €${kuecheTax.toFixed(2)}`);
+    if (totalRemainder > 0.005) breakdown.push(`${t('kucheReste')} €${totalRemainder.toFixed(2)}`);
+    document.getElementById('kuche-breakdown').textContent = breakdown.join('  ·  ');
+  } else {
+    kucheBox.style.display = 'none';
+  }
+}
+
+function buildExportData() {
+  const {payouts, kuecheTax, servicePool, totalRemainder, total, totalKuche, totalHours, perHour} = getPayouts();
+  const datum = document.getElementById('datum').value;
+
+  // Section 1: Summary header (like original spreadsheet top section)
+  const summary = [
+    { A: t('colDate'),            B: datum },
+    { A: t('trinkgeld'),          B: total },
+    { A: t('colKucheTax'),        B: kuecheTax },
+    { A: t('servicePool'),        B: servicePool },
+    { A: t('kucheTotalLabel'),    B: totalKuche },
+    { A: '' },
+    { A: t('totalHours'),         B: parseFloat(totalHours.toFixed(2)) },
+    { A: t('perHour'),            B: parseFloat(perHour.toFixed(2)) },
+    { A: '' },
+  ];
+
+  // Section 2: Staff breakdown table
+  const staffHeaders = [t('colName'), t('colShifts'), t('colHours'), t('colTip'), t('colPerHour'), t('colReste')];
+  const staffRows = payouts.map(p => {
+    let shiftsDesc = '–';
+    if (p.mode === 'hours') { shiftsDesc = `${parseFloat(p.directHours)||0}h`; }
+    else { shiftsDesc = (p.shifts||[]).filter(s=>parseTime(s.von)!==null&&parseTime(s.bis)!==null).map(s=>`${formatParsed(s.von)}-${formatParsed(s.bis)}`).join(' + ') || '–'; }
+    return {
+      [t('colName')]: p.name||'–',
+      [t('colShifts')]: shiftsDesc,
+      [t('colHours')]: parseFloat(p.hours.toFixed(2)),
+      [t('colTip')]: p.rounded,
+      [t('colPerHour')]: parseFloat(perHour.toFixed(2)),
+      [t('colReste')]: p.remainder,
+    };
+  });
+
+  return { summary, staffHeaders, staffRows, datum };
+}
+
+function exportExcel() {
+  const { summary, staffHeaders, staffRows, datum } = buildExportData();
+
+  // Build worksheet manually for nice layout
+  const wsData = [];
+  // Summary rows (2 columns)
+  summary.forEach(r => wsData.push([r.A || '', r.B !== undefined ? r.B : '']));
+  // Staff header row
+  wsData.push(staffHeaders);
+  // Staff data rows
+  staffRows.forEach(r => wsData.push(staffHeaders.map(h => r[h] ?? '')));
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:22},{wch:22},{wch:16},{wch:14},{wch:18},{wch:18}];
+
+  // Bold the staff header row (row index = summary.length)
+  const headerRowIdx = summary.length;
+  staffHeaders.forEach((_, ci) => {
+    const cellRef = XLSX.utils.encode_cell({r: headerRowIdx, c: ci});
+    if (ws[cellRef]) ws[cellRef].s = { font: { bold: true } };
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, 'Trinkgeld', ws);
+  XLSX.writeFile(wb, `trinkgeld_${datum||'export'}.xlsx`);
+  showToast(t('excelDownloaded'));
+}
+
+function copyForSheets() {
+  const { summary, staffHeaders, staffRows } = buildExportData();
+
+  const lines = [];
+  // Summary section
+  summary.forEach(r => lines.push(`${r.A||''}\t${r.B !== undefined ? r.B : ''}`));
+  // Staff table header
+  lines.push(staffHeaders.join('\t'));
+  // Staff rows
+  staffRows.forEach(r => lines.push(staffHeaders.map(h => r[h] ?? '').join('\t')));
+
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(()=>showToast(t('copiedToast')))
+    .catch(()=>showToast(t('copyFail')));
+}
+
+function saveEntry() {
+  const datum = document.getElementById('datum').value;
+  if (!datum) { showToast(t('noDatum')); return; }
+  const {payouts, kuecheTax, total, totalKuche} = getPayouts();
+  const entry = {
+    datum, total, kuecheTax, totalKuche,
+    payouts: payouts.map(p=>({name:p.name, hours:p.hours, rounded:p.rounded, remainder:p.remainder, shifts:p.shifts, mode:p.mode, directHours:p.directHours})),
+    savedAt: Date.now()
+  };
+  const idx = history.findIndex(h=>h.datum===datum);
+  if (idx>=0) history[idx]=entry; else history.unshift(entry);
+  history.sort((a,b)=>b.datum.localeCompare(a.datum));
+  saveData();
+  showToast(t('savedToast'));
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!history.length) { el.innerHTML=`<div class="empty">${t('noHistory')}</div>`; return; }
+  el.innerHTML = '';
+  history.forEach((entry,i) => {
+    const div = document.createElement('div');
+    div.className = 'hentry';
+    const names = entry.payouts.map(p=>p.name).join(', ');
+    const kucheStr = entry.totalKuche>0 ? ` · 🍳 €${entry.totalKuche.toFixed(2)}` : '';
+    div.innerHTML = `
+      <div onclick="loadEntry(${i})" style="flex:1;cursor:pointer;">
+        <div class="hdate">${entry.datum}</div>
+        <div class="hmeta">${names} · €${entry.total.toFixed(2)}${kucheStr}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="expbtn xl" onclick="exportEntryExcel(${i})" style="padding:5px 10px;font-size:12px;">📊</button>
+        <button class="rmbtn" onclick="deleteEntry(${i})">×</button>
+        <span style="color:var(--text-muted);font-size:18px;">›</span>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function loadEntry(i) {
+  const entry = history[i];
+  document.getElementById('datum').value = entry.datum;
+  document.getElementById('trinkgeld').value = entry.total;
+  persons = entry.payouts.map(p=>({name:p.name, shifts:p.shifts||[{von:'',bis:''}], mode:p.mode||'time', directHours:p.directHours||''}));
+  switchTab('calc');
+  renderPersons();
+}
+
+function deleteEntry(i) {
+  if (!confirm(t('deleteConfirm'))) return;
+  history.splice(i,1); saveData(); renderHistory();
+}
+
+function exportEntryExcel(i) {
+  const entry = history[i];
+  const totalHours = entry.payouts.reduce((a,x)=>a+x.hours,0);
+  const servicePool = parseFloat((entry.total - (entry.kuecheTax||0)).toFixed(2));
+  const perHour = totalHours > 0 ? parseFloat((servicePool / totalHours).toFixed(2)) : 0;
+  const totalKuche = entry.totalKuche || 0;
+
+  const summary = [
+    { A: t('colDate'),         B: entry.datum },
+    { A: t('trinkgeld'),       B: entry.total },
+    { A: t('colKucheTax'),     B: entry.kuecheTax||0 },
+    { A: t('servicePool'),     B: servicePool },
+    { A: t('kucheTotalLabel'), B: totalKuche },
+    { A: '' },
+    { A: t('totalHours'),      B: parseFloat(totalHours.toFixed(2)) },
+    { A: t('perHour'),         B: perHour },
+    { A: '' },
+  ];
+
+  const staffHeaders = [t('colName'), t('colShifts'), t('colHours'), t('colTip'), t('colPerHour'), t('colReste')];
+  const staffRows = entry.payouts.map(p => {
+    const shiftsDesc = (p.shifts||[]).filter(s=>parseTime(s.von)!==null&&parseTime(s.bis)!==null).map(s=>`${formatParsed(s.von)}-${formatParsed(s.bis)}`).join(' + ') || (p.directHours?`${p.directHours}h`:'–');
+    return {
+      [t('colName')]: p.name,
+      [t('colShifts')]: shiftsDesc,
+      [t('colHours')]: parseFloat(p.hours.toFixed(2)),
+      [t('colTip')]: p.rounded,
+      [t('colPerHour')]: perHour,
+      [t('colReste')]: p.remainder,
+    };
+  });
+
+  const wsData = [];
+  summary.forEach(r => wsData.push([r.A||'', r.B !== undefined ? r.B : '']));
+  wsData.push(staffHeaders);
+  staffRows.forEach(r => wsData.push(staffHeaders.map(h => r[h] ?? '')));
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:22},{wch:22},{wch:16},{wch:14},{wch:18},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, 'Trinkgeld', ws);
+  XLSX.writeFile(wb, `trinkgeld_${entry.datum}.xlsx`);
+}
+
+function renderDefaultNames() {
+  const c = document.getElementById('default-names');
+  c.innerHTML = '';
+  settings.defaultNames.forEach((n,i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+    div.innerHTML = `<input type="text" value="${n}" style="max-width:160px;" oninput="settings.defaultNames[${i}]=this.value;" /><button class="rmbtn" onclick="settings.defaultNames.splice(${i},1);renderDefaultNames();">×</button>`;
+    c.appendChild(div);
+  });
+}
+
+function addDefaultName() { settings.defaultNames.push(''); renderDefaultNames(); }
+
+function saveSettings() {
+  settings.defaultKuechePct = parseFloat(document.getElementById('defaultKuechePct').value)||0;
+  saveData(); showToast(t('settingsSaved'));
+}
+
+function switchTab(name) {
+  ['calc','history','settings'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((btn,i) => {
+    btn.classList.toggle('active', ['calc','history','settings'][i]===name);
+  });
+  if (name==='history') renderHistory();
+  if (name==='settings') { renderDefaultNames(); document.getElementById('defaultKuechePct').value=settings.defaultKuechePct; }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function openImport() {
+  document.getElementById('import-modal').style.display = 'block';
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-error').style.display = 'none';
+  // On mobile, focus after a short delay so keyboard appears
+  setTimeout(() => document.getElementById('import-textarea').focus(), 100);
+}
+
+function closeImport() {
+  document.getElementById('import-modal').style.display = 'none';
+}
+
+function doImport() {
+  const raw = document.getElementById('import-textarea').value.trim();
+  const errEl = document.getElementById('import-error');
+  errEl.style.display = 'none';
+
+  function fail(msg) {
+    errEl.textContent = msg || t('importFail');
+    errEl.style.display = 'block';
+  }
+
+  if (!raw) return fail(t('importFail'));
+
+  try {
+    const lines = raw.split('\n').map(l => l.split('\t').map(c => c.trim()));
+
+    // --- Parse summary section (key | value rows at top) ---
+    let datum = '', totalTips = 0, kuechePctVal = 0;
+    let staffHeaderIdx = -1;
+
+    // Keys we look for in both DE and EN
+    const KEY_DATE    = [LANG.de.colDate.toLowerCase(),    LANG.en.colDate.toLowerCase()];
+    const KEY_TIP     = ['trinkgeld', 'total tips', LANG.de.trinkgeld.toLowerCase(), LANG.en.trinkgeld.toLowerCase()];
+    const KEY_KTAX    = [LANG.de.colKucheTax.toLowerCase(), LANG.en.colKucheTax.toLowerCase(), 'küche tax', 'kitchen tax'];
+    const KEY_SERVICE = [LANG.de.servicePool.toLowerCase(), LANG.en.servicePool.toLowerCase()];
+    const KEY_NAME    = [LANG.de.colName.toLowerCase(), LANG.en.colName.toLowerCase()];
+
+    let servicePool = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const row = lines[i];
+      if (!row || row.length < 2) continue;
+      const key = (row[0] || '').toLowerCase();
+      const val = row[1] || '';
+
+      if (KEY_DATE.some(k => key.includes(k))) {
+        datum = val;
+      } else if (KEY_TIP.some(k => key.includes(k))) {
+        totalTips = parseFloat(val.replace(',', '.')) || 0;
+      } else if (KEY_KTAX.some(k => key.includes(k))) {
+        const ktaxAmt = parseFloat(val.replace(',', '.')) || 0;
+        // We'll back-calculate % after we have total
+        if (ktaxAmt > 0 && totalTips > 0) kuechePctVal = Math.round((ktaxAmt / totalTips) * 100);
+      } else if (KEY_SERVICE.some(k => key.includes(k))) {
+        servicePool = parseFloat(val.replace(',', '.')) || 0;
+      }
+
+      // Detect staff table header row — has "Name" in first cell
+      if (KEY_NAME.some(k => (row[0]||'').toLowerCase() === k)) {
+        staffHeaderIdx = i;
+        break;
+      }
+    }
+
+    if (staffHeaderIdx === -1) return fail(t('importFail'));
+
+    // --- Parse staff table ---
+    const headers = lines[staffHeaderIdx].map(h => h.toLowerCase());
+    const iName   = headers.findIndex(h => KEY_NAME.some(k => h === k));
+    const iShifts = headers.findIndex(h => [LANG.de.colShifts, LANG.en.colShifts].map(x=>x.toLowerCase()).some(k => h.includes(k)));
+    const iHours  = headers.findIndex(h => [LANG.de.colHours, LANG.en.colHours].map(x=>x.toLowerCase()).some(k => h.includes(k)));
+
+    if (iName === -1) return fail(t('importFail'));
+
+    const importedPersons = [];
+    for (let i = staffHeaderIdx + 1; i < lines.length; i++) {
+      const row = lines[i];
+      if (!row || !row[iName]) continue;
+      const name = row[iName];
+      // Skip summary/total rows
+      if ([LANG.de.colTotal, LANG.en.colTotal, LANG.de.colKucheTax, LANG.en.colKucheTax,
+           LANG.de.colRemainder, LANG.en.colRemainder, '🍳'].some(k => name.startsWith(k))) continue;
+
+      let shifts = [{von:'', bis:''}];
+      let mode = 'hours';
+      let directHours = '';
+
+      // Try to parse shift times from shifts column
+      if (iShifts !== -1 && row[iShifts] && row[iShifts] !== '–') {
+        const shiftStr = row[iShifts];
+        // Could be "11:00-15:00 + 17:30-23:00" or "11:00-15:00"
+        const parts = shiftStr.split('+').map(s => s.trim()).filter(Boolean);
+        const parsedShifts = parts.map(part => {
+          const halves = part.split('-');
+          if (halves.length >= 2) {
+            const von = halves[0].trim();
+            const bis = halves[halves.length - 1].trim();
+            // Validate they look like times
+            if (/^\d{2}:\d{2}$/.test(von) && /^\d{2}:\d{2}$/.test(bis)) {
+              return { von, bis };
+            }
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (parsedShifts.length > 0) {
+          shifts = parsedShifts;
+          mode = 'time';
+        }
+      }
+
+      // Fall back to direct hours
+      if (mode === 'hours' && iHours !== -1 && row[iHours]) {
+        directHours = String(parseFloat(row[iHours].replace(',', '.')) || '');
+      }
+
+      importedPersons.push({ name, shifts, mode, directHours });
+    }
+
+    if (importedPersons.length === 0) return fail(t('importFail'));
+
+    // --- Apply to calculator ---
+    if (datum) document.getElementById('datum').value = datum;
+    if (totalTips > 0) document.getElementById('trinkgeld').value = totalTips;
+    if (kuechePctVal > 0) document.getElementById('kuechePct').value = kuechePctVal;
+
+    persons = importedPersons;
+    // Set global inputMode to whatever the majority of persons use
+    const timeModeCount = persons.filter(p => p.mode === 'time').length;
+    inputMode = timeModeCount >= persons.length / 2 ? 'time' : 'hours';
+    document.getElementById('mode-btn-time').classList.toggle('active', inputMode === 'time');
+    document.getElementById('mode-btn-hours').classList.toggle('active', inputMode === 'hours');
+    document.getElementById('t-hint').style.display = inputMode === 'time' ? '' : 'none';
+
+    closeImport();
+    renderPersons();
+    showToast(t('importOk'));
+
+  } catch(e) {
+    fail(t('importFail'));
+  }
+}
+
+function openAbout() {
+  document.getElementById('about-modal').style.display = 'block';
+}
+function closeAbout() {
+  document.getElementById('about-modal').style.display = 'none';
+}
+document.addEventListener('click', function(e) {
+  const aboutModal = document.getElementById('about-modal');
+  if (e.target === aboutModal) closeAbout();
+  const importModal = document.getElementById('import-modal');
+  if (e.target === importModal) closeImport();
+});
+
+function init() {
+  loadData();
+  persons = settings.defaultNames.map(n=>({name:n, shifts:[{von:'',bis:''}], mode:'time', directHours:''}));
+  document.getElementById('datum').valueAsDate = new Date();
+  document.getElementById('kuechePct').value = settings.defaultKuechePct;
+  applyLang();
+}
+
+init();
+</script>
+</body>
+</html>
