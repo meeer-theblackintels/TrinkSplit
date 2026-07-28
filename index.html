@@ -45,11 +45,11 @@
   .metric-label{font-size:12px;color:var(--text-sec);margin-bottom:2px;}
   .metric-val{font-size:20px;font-weight:600;}
   .mgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1rem;}
-  .pblock{border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;}
-  .pheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-  .pname{font-size:14px;font-weight:500;border:none;background:transparent;color:var(--text);width:130px;outline:none;border-bottom:0.5px solid var(--border-strong);padding-bottom:2px;}
+  .pblock{border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;background:var(--surface-1);}
+  .pheader{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border);}
+  .pname{font-size:14px;font-weight:500;border:none;background:var(--surface);color:var(--text);width:140px;max-width:140px;outline:none;border-radius:var(--radius);padding:5px 8px;border:0.5px solid var(--border-strong);}
   .srow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;}
-  .slabel{font-size:11px;color:var(--text-sec);background:var(--surface-1);border-radius:4px;padding:2px 7px;display:inline-block;margin-bottom:6px;}
+  .slabel{font-size:11px;color:var(--text-sec);background:var(--surface);border-radius:4px;padding:2px 7px;display:inline-block;margin-bottom:6px;border:0.5px solid var(--border);}
   .ti{font-family:var(--font-mono);letter-spacing:0.03em;}
   .ti.ok{border-color:var(--success-border)!important;color:var(--success-text);}
   .ti.err{border-color:#fca5a5!important;color:#dc2626;}
@@ -203,7 +203,6 @@
     <p style="font-size:13px;color:var(--text-sec);margin-bottom:12px;" id="t-settings-names-desc">Diese Namen werden beim Start vorausgefüllt.</p>
     <div id="default-names"></div>
     <button class="addbtn" onclick="addDefaultName()" style="margin-top:8px;" id="t-add-default-name">+ Name hinzufügen</button>
-    <button class="savebtn" onclick="saveSettings()" id="t-save-settings">Einstellungen speichern</button>
   </div>
   <div class="card">
     <div class="sec" id="t-settings-kuche-sec">Standard Küche Tax</div>
@@ -227,6 +226,11 @@
     </div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="t-rounding-desc"></p>
   </div>
+</div>
+
+<!-- SAVE SETTINGS BTN (shown only on settings tab) -->
+<div id="save-settings-footer" style="display:none;padding:0 0 1rem;">
+  <button class="savebtn" onclick="saveSettings()" id="t-save-settings">Einstellungen speichern</button>
 </div>
 
 <!-- FOOTER -->
@@ -811,6 +815,7 @@ function switchTab(name) {
   });
   if (name==='history') renderHistory();
   if (name==='settings') { renderDefaultNames(); document.getElementById('defaultKuechePct').value=settings.defaultKuechePct; document.getElementById('roundingToggle').checked=settings.roundDown||false; }
+  document.getElementById('save-settings-footer').style.display = name==='settings' ? 'block' : 'none';
 }
 
 function showToast(msg) {
