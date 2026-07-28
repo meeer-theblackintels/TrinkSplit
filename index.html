@@ -87,6 +87,18 @@
   .mode-toggle{display:flex;gap:2px;background:var(--surface-1);border-radius:var(--radius);padding:2px;margin-bottom:12px;}
   .mode-btn{flex:1;padding:5px 8px;font-size:12px;border:none;background:none;cursor:pointer;border-radius:6px;color:var(--text-sec);font-family:var(--font);}
   .mode-btn.active{background:var(--surface);color:var(--text);font-weight:500;border:0.5px solid var(--border);}
+  .toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border-strong);border-radius:24px;transition:0.2s;}
+  .toggle-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+  .toggle-switch input:checked + .toggle-slider{background:var(--accent);}
+  .toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px);}
+  .tooltip-wrap{position:relative;display:inline-flex;align-items:center;}
+  .tooltip-q{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--surface-1);border:0.5px solid var(--border-strong);font-size:11px;color:var(--text-muted);cursor:help;flex-shrink:0;}
+  .tooltip-box{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:12px;line-height:1.6;padding:10px 12px;border-radius:var(--radius);width:240px;z-index:50;pointer-events:none;}
+  .tooltip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--text);}
+  .tooltip-wrap:hover .tooltip-box,.tooltip-wrap:focus-within .tooltip-box{display:block;}
+  @media(max-width:480px){.tooltip-box{left:auto;right:-8px;transform:none;}}
   .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);border-radius:var(--radius);padding:9px 20px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;z-index:999;}
   .toast.show{opacity:1;}
   @media(max-width:480px){
@@ -176,49 +188,6 @@
   </div>
 </div>
 
-<!-- ABOUT MODAL -->
-<div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
-  <div style="background:var(--surface);border-radius:12px;max-width:520px;margin:2rem auto;padding:1.25rem;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-size:18px;font-weight:700;">🍽️ TrinkSplit</div>
-      <button class="rmbtn" onclick="closeAbout()" style="font-size:24px;">×</button>
-    </div>
-    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p1"></p>
-    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p2"></p>
-    <div style="background:var(--warn-bg);border:0.5px solid var(--warn-border);border-radius:var(--radius);padding:12px 14px;">
-      <div style="font-size:12px;font-weight:600;color:var(--warn-text);margin-bottom:6px;" id="t-about-rounding-title"></div>
-      <p style="font-size:13px;line-height:1.65;color:var(--warn-text);" id="t-about-p3"></p>
-    </div>
-    <button onclick="closeAbout()" style="width:100%;margin-top:1rem;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-about-close">Schließen</button>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div style="text-align:center;padding:2rem 0 1rem;">
-  <a href="https://github.com/meeer-theblackintels" target="_blank" rel="noopener noreferrer"
-    style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);text-decoration:none;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:7px 16px;background:var(--surface);">
-    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-    <span id="t-github">Find me on GitHub</span>
-  </a>
-</div>
-
-<!-- IMPORT MODAL -->
-<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
-  <div style="background:var(--surface);border-radius:12px;max-width:560px;margin:2rem auto;padding:1.25rem;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-      <div style="font-size:16px;font-weight:600;" id="t-import-title">Daten importieren</div>
-      <button class="rmbtn" onclick="closeImport()" style="font-size:24px;">×</button>
-    </div>
-    <p style="font-size:13px;color:var(--text-sec);margin-bottom:10px;" id="t-import-desc">Kopierten Export-Text hier einfügen:</p>
-    <textarea id="import-textarea" style="width:100%;height:200px;font-size:13px;font-family:var(--font-mono);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);padding:10px;resize:vertical;outline:none;" placeholder="Strg+V / Cmd+V / Tippen &amp; halten → Einfügen…"></textarea>
-    <div style="display:flex;gap:8px;margin-top:10px;">
-      <button onclick="doImport()" style="flex:1;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-do">Importieren</button>
-      <button onclick="closeImport()" style="padding:10px 16px;font-size:14px;background:var(--surface-1);color:var(--text-sec);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-cancel">Abbrechen</button>
-    </div>
-    <div id="import-error" style="display:none;margin-top:8px;font-size:13px;color:#dc2626;background:#fef2f2;border-radius:var(--radius);padding:8px 12px;"></div>
-  </div>
-</div>
-
 <!-- VERLAUF -->
 <div id="tab-history" style="display:none;">
   <div class="card">
@@ -243,8 +212,62 @@
       <input type="number" id="defaultKuechePct" min="0" max="100" step="1" value="0" />
     </div>
   </div>
+  <div class="card">
+    <div class="sec" id="t-settings-rounding-sec">Auszahlung</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <label class="toggle-switch">
+        <input type="checkbox" id="roundingToggle" onchange="settings.roundDown=this.checked;saveData();calculate();" />
+        <span class="toggle-slider"></span>
+      </label>
+      <span style="font-size:14px;color:var(--text);" id="t-rounding-label">Auf 0,50 € abrunden</span>
+      <div class="tooltip-wrap">
+        <span class="tooltip-q">?</span>
+        <div class="tooltip-box" id="t-rounding-tooltip"></div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="t-rounding-desc"></p>
+  </div>
 </div>
 
+<!-- FOOTER -->
+<div style="text-align:center;padding:2rem 0 1rem;">
+  <a href="https://github.com/meeer-theblackintels" target="_blank" rel="noopener noreferrer"
+    style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);text-decoration:none;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:7px 16px;background:var(--surface);">
+    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    <span id="t-github">Find me on GitHub</span>
+  </a>
+</div>
+
+</div>
+
+<!-- ABOUT MODAL -->
+<div id="about-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
+  <div style="background:var(--surface);border-radius:12px;max-width:520px;margin:2rem auto;padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:18px;font-weight:700;">🍽️ TrinkSplit</div>
+      <button class="rmbtn" onclick="closeAbout()" style="font-size:24px;">×</button>
+    </div>
+    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p1"></p>
+    <p style="font-size:14px;line-height:1.7;color:var(--text);margin-bottom:1rem;" id="t-about-p2"></p>
+    <button onclick="closeAbout()" style="width:100%;margin-top:0.5rem;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-about-close">Schließen</button>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div id="import-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;padding:1rem;overflow-y:auto;">
+  <div style="background:var(--surface);border-radius:12px;max-width:560px;margin:2rem auto;padding:1.25rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+      <div style="font-size:16px;font-weight:600;" id="t-import-title">Daten importieren</div>
+      <button class="rmbtn" onclick="closeImport()" style="font-size:24px;">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:10px;" id="t-import-desc">Kopierten Export-Text hier einfügen:</p>
+    <textarea id="import-textarea" style="width:100%;height:200px;font-size:13px;font-family:var(--font-mono);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);padding:10px;resize:vertical;outline:none;" placeholder="Strg+V / Cmd+V / Tippen &amp; halten → Einfügen…"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button onclick="doImport()" style="flex:1;padding:10px;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-do">Importieren</button>
+      <button onclick="closeImport()" style="padding:10px 16px;font-size:14px;background:var(--surface-1);color:var(--text-sec);border:0.5px solid var(--border-strong);border-radius:var(--radius);cursor:pointer;font-family:var(--font);" id="t-import-cancel">Abbrechen</button>
+    </div>
+    <div id="import-error" style="display:none;margin-top:8px;font-size:13px;color:#dc2626;background:#fef2f2;border-radius:var(--radius);padding:8px 12px;"></div>
+  </div>
 </div>
 
 <script>
@@ -264,6 +287,10 @@ const LANG = {
     settingsNamesDesc:'Diese Namen werden beim Start vorausgefüllt.',
     addDefaultName:'+ Name hinzufügen', saveSettings:'Einstellungen speichern',
     settingsKucheSec:'Standard Küche Tax', settingsKucheLabel:'Küche Tax (%)',
+    settingsRoundingSec:'Auszahlung',
+    roundingLabel:'Auf 0,50 € abrunden',
+    roundingTooltip:'Rundet jeden Betrag auf den nächsten halben Euro ab. Die entstehenden Reste werden an die Küche weitergegeben. Standardmäßig wird der genaue Betrag angezeigt.',
+    roundingDesc:'Aus: genaue Berechnung wird angezeigt. An: Beträge werden auf 0,50 € abgerundet.',
     kucheTotalLabel:'🍳 Gesamt an Küche auszahlen', von:'Von', bis:'Bis',
     dienst:'Dienst', schicht:'Schicht', teildienst:'+ Teildienst hinzufügen',
     stunden:'Stunden', hoursPlaceholder:'z.B. 7.5', timePlaceholder:'z.B. 1130',
@@ -301,6 +328,10 @@ const LANG = {
     settingsNamesDesc:'These names are pre-filled on start.',
     addDefaultName:'+ Add name', saveSettings:'Save settings',
     settingsKucheSec:'Default kitchen tax', settingsKucheLabel:'Kitchen tax (%)',
+    settingsRoundingSec:'Payout',
+    roundingLabel:'Round down to €0.50',
+    roundingTooltip:'Rounds each payout down to the nearest half euro. The leftover cents get added to the kitchen total. By default the exact amount is shown.',
+    roundingDesc:'Off: shows the exact calculated amount. On: rounds each payout down to the nearest €0.50.',
     kucheTotalLabel:'🍳 Total to pay to kitchen', von:'From', bis:'To',
     dienst:'Shift', schicht:'Shift', teildienst:'+ Add split shift',
     stunden:'Hours', hoursPlaceholder:'e.g. 7.5', timePlaceholder:'e.g. 1130',
@@ -328,7 +359,7 @@ const LANG = {
 let lang = localStorage.getItem('tk_lang') || 'de';
 let persons = [];
 let inputMode = 'time'; // 'time' or 'hours'
-let settings = { defaultNames:['A','B','C','D','E'], defaultKuechePct:0 };
+let settings = { defaultNames:['A','B','C','D','E'], defaultKuechePct:0, roundDown:false };
 let history = [];
 
 function t(key) { return LANG[lang][key] || key; }
@@ -348,13 +379,15 @@ function applyLang() {
     ['t-settings-names-desc','settingsNamesDesc'],['t-add-default-name','addDefaultName'],
     ['t-save-settings','saveSettings'],['t-settings-kuche-sec','settingsKucheSec'],
     ['t-settings-kuche-label','settingsKucheLabel'],['t-kuche-total-label','kucheTotalLabel'],
+    ['t-settings-rounding-sec','settingsRoundingSec'],['t-rounding-label','roundingLabel'],
+    ['t-rounding-desc','roundingDesc'],['t-rounding-tooltip','roundingTooltip'],
     ['t-import-label','importLabel'],['t-import-title','importTitle'],
     ['t-import-desc','importDesc'],['t-import-do','importDo'],['t-import-cancel','importCancel'],
     ['t-about-label','aboutLabel'],['t-about-p1','aboutP1'],['t-about-p2','aboutP2'],
-    ['t-about-rounding-title','aboutRoundingTitle'],['t-about-p3','aboutP3'],['t-about-close','aboutClose'],
+    ['t-about-close','aboutClose'],
     ['t-github','github'],
   ];
-  const htmlIds = ['t-about-p1','t-about-p2','t-about-p3'];
+  const htmlIds = ['t-about-p1','t-about-p2'];
   ids.forEach(([id, key]) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -516,12 +549,12 @@ function getPayouts() {
   const payouts = persons.map((p,pi) => {
     const h = hoursArr[pi];
     const raw = h*perHour;
-    const rounded = floorHalf(raw);
-    const remainder = parseFloat((raw-rounded).toFixed(2));
+    const rounded = settings.roundDown ? floorHalf(raw) : parseFloat(raw.toFixed(2));
+    const remainder = settings.roundDown ? parseFloat((raw-rounded).toFixed(2)) : 0;
     totalPaid += rounded;
     return {name:p.name, hours:h, raw, rounded, remainder, shifts:p.shifts, mode:p.mode||inputMode, directHours:p.directHours};
   });
-  const totalRemainder = parseFloat((servicePool-totalPaid).toFixed(2));
+  const totalRemainder = settings.roundDown ? parseFloat((servicePool-totalPaid).toFixed(2)) : 0;
   const totalKuche = parseFloat((kuecheTax + totalRemainder).toFixed(2));
   return {total, kuecheTax, servicePool, totalHours, perHour, payouts, totalRemainder, totalKuche};
 }
@@ -777,7 +810,7 @@ function switchTab(name) {
     btn.classList.toggle('active', ['calc','history','settings'][i]===name);
   });
   if (name==='history') renderHistory();
-  if (name==='settings') { renderDefaultNames(); document.getElementById('defaultKuechePct').value=settings.defaultKuechePct; }
+  if (name==='settings') { renderDefaultNames(); document.getElementById('defaultKuechePct').value=settings.defaultKuechePct; document.getElementById('roundingToggle').checked=settings.roundDown||false; }
 }
 
 function showToast(msg) {
