@@ -23,8 +23,7 @@ No app install. No account. No internet required after loading. Just open the fi
 2. Set a kitchen tax percentage if applicable
 3. Add each staff member and their shift times (or hours directly)
 4. TrinkSplit calculates each person's share proportionally
-5. Each payout is rounded down to the nearest €0.50 and the leftover cents are added to the kitchen total
-6. Export or save the result
+5. Export or save the result
 
 ## Self-hosting
 
