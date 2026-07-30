@@ -37,6 +37,12 @@
   .lang-btn:hover{background:var(--surface-1);}
   input[type=text],input[type=number],input[type=date]{width:100%;max-width:100%;box-sizing:border-box;padding:8px 10px;font-size:14px;font-family:var(--font);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text);outline:none;-webkit-appearance:none;appearance:none;}
   input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
+  .date-field{position:relative;}
+  .date-field input[type=date]{position:relative;z-index:2;background:transparent;color:transparent;caret-color:transparent;border-color:transparent;}
+  .date-field input[type=date]:focus{box-shadow:none;border-color:transparent;}
+  .date-field input[type=date]:focus + .date-display{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
+  .date-display{position:absolute;inset:0;z-index:1;display:flex;align-items:center;padding:8px 10px;font-size:14px;font-family:var(--font);color:var(--text);background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);pointer-events:none;box-sizing:border-box;}
+  .date-display.placeholder{color:var(--text-muted);}
   .card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
   label{font-size:13px;color:var(--text-sec);display:block;margin-bottom:4px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
@@ -136,8 +142,13 @@
 <div id="tab-calc">
   <div class="card">
     <div class="row2">
-      <div><label id="t-datum">Datum</label><input type="date" id="datum" /></div>
-      <div><label id="t-trinkgeld">Trinkgeld gesamt (€)</label><input type="number" id="trinkgeld" min="0" step="0.01" placeholder="0.00" oninput="calculate()" /></div>
+      <div><label id="t-datum">Datum</label>
+        <div class="date-field">
+          <input type="date" id="datum" oninput="updateDatumPreview()" />
+          <div id="datum-display" class="date-display"></div>
+        </div>
+      </div>
+      <div><label id="t-trinkgeld">Trinkgeld gesamt (€)</label><input type="text" inputmode="decimal" id="trinkgeld" placeholder="0.00" oninput="calculate();updateTrinkgeldPreview()" /><div id="trinkgeld-preview" style="display:none;font-size:11px;color:var(--text-muted);margin-top:4px;"></div></div>
     </div>
     <div class="row2">
       <div><label id="t-kuechetax">Küche Tax (%)</label><input type="number" id="kuechePct" min="0" max="100" step="1" value="0" oninput="calculate()" /></div>
@@ -179,7 +190,6 @@
   <div class="card">
     <div class="sec" id="t-export-sec">Exportieren</div>
     <div class="exprow">
-      <button class="expbtn xl" onclick="exportExcel()" id="t-export-xl">📊 Excel (.xlsx)</button>
       <button class="expbtn cp" onclick="copyForSheets()" id="t-export-sheets">📋 Kopieren für Google Sheets</button>
     </div>
     <div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px;">
@@ -193,6 +203,9 @@
   <div class="card">
     <div class="sec" id="t-history-sec">Gespeicherte Einträge</div>
     <div id="history-list"></div>
+    <div id="clear-all-wrap" style="display:none;margin-top:10px;border-top:0.5px solid var(--border);padding-top:10px;">
+      <button class="expbtn" onclick="clearAllHistory()" id="t-clear-all-btn" style="background:var(--surface-1);color:#dc2626;border:0.5px solid #fca5a5;width:100%;justify-content:center;">🗑️ Alle Einträge löschen</button>
+    </div>
   </div>
 </div>
 
@@ -281,12 +294,12 @@ const LANG = {
     credit:'Erstellt mit Claude Sonnet 4.6 von MNA',
     github:'Finde mich auf GitHub',
     langBtn:'🌐 EN', tabCalc:'Berechnung', tabHistory:'Verlauf', tabSettings:'Einstellungen',
-    datum:'Datum', trinkgeld:'Trinkgeld gesamt (€)', kuechetax:'Küche Tax (%)',
+    datum:'Datum', trinkgeld:'Trinkgeld gesamt (€)', kuechetax:'Küche Tax (%)', datePlaceholder:'TT.MM.JJJJ', tipPlaceholder:'z.B. 100+50+30',
     personalSec:'Personal & Dienstzeiten', modeTime:'🕐 Dienstzeiten (Von/Bis)', modeHours:'⏱ Stunden direkt eingeben',
     hint:'Zeiten eingeben als: 1730, 17:30 oder 830', addPerson:'+ Person hinzufügen',
     totalHours:'Gesamt Stunden', perHour:'Pro Stunde', servicePool:'Service Pool',
     auszahlung:'Auszahlung', saveBtn:'💾 Speichern', exportSec:'Exportieren',
-    exportXl:'📊 Excel (.xlsx)', exportSheets:'📋 Kopieren für Google Sheets',
+    exportSheets:'📋 Kopieren für Google Sheets',
     historySec:'Gespeicherte Einträge', settingsNamesSec:'Standard-Personal',
     settingsNamesDesc:'Diese Namen werden beim Start vorausgefüllt.',
     addDefaultName:'+ Name hinzufügen', saveSettings:'Einstellungen speichern',
@@ -300,6 +313,7 @@ const LANG = {
     stunden:'Stunden', hoursPlaceholder:'z.B. 7.5', timePlaceholder:'z.B. 1130',
     kucheInfo:'Küche Tax:', kucheReste:'davon Reste:', kucheGesamt:'Gesamt:',
     noHistory:'Noch keine Einträge gespeichert.', deleteConfirm:'Diesen Eintrag löschen?',
+    clearAllBtn:'🗑️ Alle Einträge löschen', clearAllConfirm:'Wirklich ALLE gespeicherten Einträge unwiderruflich löschen?', clearedAll:'Alle Einträge gelöscht.',
     savedToast:'Gespeichert!', copiedToast:'Kopiert! Jetzt in Google Sheets einfügen (Strg+V).',
     copyFail:'Kopieren fehlgeschlagen.', noDatum:'Bitte Datum eingeben.',
     settingsSaved:'Einstellungen gespeichert!', excelDownloaded:'Excel-Datei heruntergeladen!',
@@ -322,12 +336,12 @@ const LANG = {
     credit:'Made using Claude Sonnet 4.6 by MNA',
     github:'Find me on GitHub',
     langBtn:'🌐 DE', tabCalc:'Calculate', tabHistory:'History', tabSettings:'Settings',
-    datum:'Date', trinkgeld:'Total tips (€)', kuechetax:'Kitchen tax (%)',
+    datum:'Date', trinkgeld:'Total tips (€)', kuechetax:'Kitchen tax (%)', datePlaceholder:'DD/MM/YYYY', tipPlaceholder:'e.g. 100+50+30',
     personalSec:'Staff & Shift Times', modeTime:'🕐 Shift times (from/to)', modeHours:'⏱ Enter hours directly',
     hint:'Enter times as: 1730, 17:30 or 830', addPerson:'+ Add person',
     totalHours:'Total hours', perHour:'Per hour', servicePool:'Service pool',
     auszahlung:'Payout', saveBtn:'💾 Save', exportSec:'Export',
-    exportXl:'📊 Excel (.xlsx)', exportSheets:'📋 Copy for Google Sheets',
+    exportSheets:'📋 Copy for Google Sheets',
     historySec:'Saved entries', settingsNamesSec:'Default staff',
     settingsNamesDesc:'These names are pre-filled on start.',
     addDefaultName:'+ Add name', saveSettings:'Save settings',
@@ -341,6 +355,7 @@ const LANG = {
     stunden:'Hours', hoursPlaceholder:'e.g. 7.5', timePlaceholder:'e.g. 1130',
     kucheInfo:'Kitchen tax:', kucheReste:'of which remainders:', kucheGesamt:'Total:',
     noHistory:'No entries saved yet.', deleteConfirm:'Delete this entry?',
+    clearAllBtn:'🗑️ Erase all entries', clearAllConfirm:'Really delete ALL saved entries? This cannot be undone.', clearedAll:'All entries erased.',
     savedToast:'Saved!', copiedToast:'Copied! Paste into Google Sheets (Ctrl+V).',
     copyFail:'Copy failed.', noDatum:'Please enter a date.',
     settingsSaved:'Settings saved!', excelDownloaded:'Excel file downloaded!',
@@ -378,8 +393,8 @@ function applyLang() {
     ['t-personal-sec','personalSec'],['t-hint','hint'],['t-add-person','addPerson'],
     ['t-total-hours','totalHours'],['t-per-hour','perHour'],['t-service-pool','servicePool'],
     ['t-auszahlung','auszahlung'],['t-save-btn','saveBtn'],['t-export-sec','exportSec'],
-    ['t-export-xl','exportXl'],['t-export-sheets','exportSheets'],
-    ['t-history-sec','historySec'],['t-settings-names-sec','settingsNamesSec'],
+    ['t-export-sheets','exportSheets'],
+    ['t-history-sec','historySec'],['t-clear-all-btn','clearAllBtn'],['t-settings-names-sec','settingsNamesSec'],
     ['t-settings-names-desc','settingsNamesDesc'],['t-add-default-name','addDefaultName'],
     ['t-save-settings','saveSettings'],['t-settings-kuche-sec','settingsKucheSec'],
     ['t-settings-kuche-label','settingsKucheLabel'],['t-kuche-total-label','kucheTotalLabel'],
@@ -401,6 +416,8 @@ function applyLang() {
   // mode toggle buttons
   document.getElementById('mode-btn-time').innerHTML = t('modeTime');
   document.getElementById('mode-btn-hours').innerHTML = t('modeHours');
+  document.getElementById('trinkgeld').placeholder = t('tipPlaceholder');
+  updateDatumPreview();
   renderPersons();
   calculate();
 }
@@ -541,8 +558,37 @@ function addPerson() {
 }
 function removePerson(pi) { if(persons.length<=1)return; persons.splice(pi,1); renderPersons(); }
 
+function evalTipExpression(str) {
+  if (!str) return 0;
+  const cleaned = String(str).replace(/,/g, '.').trim();
+  if (!cleaned) return 0;
+  // Only allow digits, + - * / ( ) . and spaces — no other characters get evaluated
+  if (!/^[\d+\-*/(). ]+$/.test(cleaned)) return parseFloat(cleaned) || 0;
+  try {
+    const result = Function(`"use strict"; return (${cleaned});`)();
+    return typeof result === 'number' && isFinite(result) ? result : 0;
+  } catch (e) {
+    return parseFloat(cleaned) || 0;
+  }
+}
+
+function updateTrinkgeldPreview() {
+  const el = document.getElementById('trinkgeld-preview');
+  if (!el) return;
+  const raw = document.getElementById('trinkgeld').value;
+  const hasOperator = /[+\-*/]/.test(raw);
+  if (hasOperator) {
+    const val = evalTipExpression(raw);
+    el.textContent = `= €${val.toFixed(2)}`;
+    el.style.display = '';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+}
+
 function getPayouts() {
-  const total = parseFloat(document.getElementById('trinkgeld').value)||0;
+  const total = evalTipExpression(document.getElementById('trinkgeld').value);
   const kuechePct = parseFloat(document.getElementById('kuechePct').value)||0;
   const kuecheTax = parseFloat((total*kuechePct/100).toFixed(2));
   const servicePool = parseFloat((total-kuecheTax).toFixed(2));
@@ -644,47 +690,49 @@ function buildExportData() {
     };
   });
 
-  return { summary, staffHeaders, staffRows, datum };
+  return { summary, staffHeaders, staffRows, datum, total, kuecheTax, servicePool, totalKuche, totalHours, perHour };
 }
 
-function exportExcel() {
-  const { summary, staffHeaders, staffRows, datum } = buildExportData();
+function formatDatumForExport(isoDate) {
+  if (!isoDate) return isoDate;
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  const [y, m, d] = parts;
+  return lang === 'de' ? `${d}.${m}.${y}` : `${d}/${m}/${y}`;
+}
 
-  // Build worksheet manually for nice layout
-  const wsData = [];
-  // Summary rows (2 columns)
-  summary.forEach(r => wsData.push([r.A || '', r.B !== undefined ? r.B : '']));
-  // Staff header row
-  wsData.push(staffHeaders);
-  // Staff data rows
-  staffRows.forEach(r => wsData.push(staffHeaders.map(h => r[h] ?? '')));
-
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:22},{wch:22},{wch:16},{wch:14},{wch:18},{wch:18}];
-
-  // Bold the staff header row (row index = summary.length)
-  const headerRowIdx = summary.length;
-  staffHeaders.forEach((_, ci) => {
-    const cellRef = XLSX.utils.encode_cell({r: headerRowIdx, c: ci});
-    if (ws[cellRef]) ws[cellRef].s = { font: { bold: true } };
-  });
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, 'Trinkgeld', ws);
-  XLSX.writeFile(wb, `trinkgeld_${datum||'export'}.xlsx`);
-  showToast(t('excelDownloaded'));
+function updateDatumPreview() {
+  const el = document.getElementById('datum-display');
+  if (!el) return;
+  const val = document.getElementById('datum').value;
+  if (val) {
+    el.textContent = formatDatumForExport(val);
+    el.classList.remove('placeholder');
+  } else {
+    el.textContent = t('datePlaceholder');
+    el.classList.add('placeholder');
+  }
 }
 
 function copyForSheets() {
-  const { summary, staffHeaders, staffRows } = buildExportData();
+  const { staffHeaders, staffRows, datum, total, kuecheTax, servicePool, totalKuche, perHour } = buildExportData();
 
   const lines = [];
-  // Summary section
-  summary.forEach(r => lines.push(`${r.A||''}\t${r.B !== undefined ? r.B : ''}`));
+  // Compact one-row summary
+  lines.push([
+    formatDatumForExport(datum),
+    `${t('trinkgeld')}: €${total}`,
+    `${t('servicePool')}: €${servicePool}`,
+    `${t('colKucheTax')}: €${kuecheTax}`,
+    `${t('perHour')}: €${parseFloat(perHour.toFixed(2))}`,
+    ''
+  ].join('\t'));
   // Staff table header
   lines.push(staffHeaders.join('\t'));
   // Staff rows
   staffRows.forEach(r => lines.push(staffHeaders.map(h => r[h] ?? '').join('\t')));
+  // Kitchen total row (aligned under the Trinkgeld column)
+  lines.push([t('kucheTotalLabel'), '', '', totalKuche, '', ''].join('\t'));
 
   navigator.clipboard.writeText(lines.join('\n'))
     .then(()=>showToast(t('copiedToast')))
@@ -709,7 +757,13 @@ function saveEntry() {
 
 function renderHistory() {
   const el = document.getElementById('history-list');
-  if (!history.length) { el.innerHTML=`<div class="empty">${t('noHistory')}</div>`; return; }
+  const clearWrap = document.getElementById('clear-all-wrap');
+  if (!history.length) {
+    el.innerHTML=`<div class="empty">${t('noHistory')}</div>`;
+    clearWrap.style.display = 'none';
+    return;
+  }
+  clearWrap.style.display = '';
   el.innerHTML = '';
   history.forEach((entry,i) => {
     const div = document.createElement('div');
@@ -733,7 +787,9 @@ function renderHistory() {
 function loadEntry(i) {
   const entry = history[i];
   document.getElementById('datum').value = entry.datum;
+  updateDatumPreview();
   document.getElementById('trinkgeld').value = entry.total;
+  updateTrinkgeldPreview();
   persons = entry.payouts.map(p=>({name:p.name, shifts:p.shifts||[{von:'',bis:''}], mode:p.mode||'time', directHours:p.directHours||''}));
   switchTab('calc');
   renderPersons();
@@ -742,6 +798,15 @@ function loadEntry(i) {
 function deleteEntry(i) {
   if (!confirm(t('deleteConfirm'))) return;
   history.splice(i,1); saveData(); renderHistory();
+}
+
+function clearAllHistory() {
+  if (!history.length) return;
+  if (!confirm(t('clearAllConfirm'))) return;
+  history = [];
+  saveData();
+  renderHistory();
+  showToast(t('clearedAll'));
 }
 
 function exportEntryExcel(i) {
@@ -862,7 +927,36 @@ function doImport() {
     const KEY_SERVICE = [LANG.de.servicePool.toLowerCase(), LANG.en.servicePool.toLowerCase()];
     const KEY_NAME    = [LANG.de.colName.toLowerCase(), LANG.en.colName.toLowerCase()];
 
+    // Parses "29.07.2026", "29/07/2026" or "2026-07-29" into ISO "yyyy-mm-dd"
+    function parseImportedDate(str) {
+      if (!str) return '';
+      const m = str.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+      if (m) { const [, d, mo, y] = m; return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      return '';
+    }
+
     let servicePool = 0;
+
+    // --- Try the compact one-row summary format first (current export format) ---
+    let compactKuecheAmt = 0;
+    const firstRow = lines[0] || [];
+    const isoFromFirst = parseImportedDate(firstRow[0]);
+    if (isoFromFirst) {
+      datum = isoFromFirst;
+      firstRow.slice(1).forEach(cell => {
+        if (!cell || cell.indexOf(':') === -1) return;
+        const idx = cell.indexOf(':');
+        const label = cell.slice(0, idx).toLowerCase();
+        const num = parseFloat(cell.slice(idx + 1).replace(/[^\d,.\-]/g, '').replace(',', '.'));
+        if (isNaN(num)) return;
+        if (KEY_TIP.some(k => label.includes(k))) totalTips = num;
+        else if (KEY_KTAX.some(k => label.includes(k))) compactKuecheAmt = num;
+        else if (KEY_SERVICE.some(k => label.includes(k))) servicePool = num;
+      });
+      if (compactKuecheAmt > 0 && totalTips > 0) kuechePctVal = Math.round((compactKuecheAmt / totalTips) * 100);
+    }
+
     for (let i = 0; i < lines.length; i++) {
       const row = lines[i];
       if (!row || row.length < 2) continue;
@@ -870,7 +964,7 @@ function doImport() {
       const val = row[1] || '';
 
       if (KEY_DATE.some(k => key.includes(k))) {
-        datum = val;
+        datum = parseImportedDate(val) || val;
       } else if (KEY_TIP.some(k => key.includes(k))) {
         totalTips = parseFloat(val.replace(',', '.')) || 0;
       } else if (KEY_KTAX.some(k => key.includes(k))) {
@@ -947,7 +1041,9 @@ function doImport() {
 
     // --- Apply to calculator ---
     if (datum) document.getElementById('datum').value = datum;
+    updateDatumPreview();
     if (totalTips > 0) document.getElementById('trinkgeld').value = totalTips;
+    updateTrinkgeldPreview();
     if (kuechePctVal > 0) document.getElementById('kuechePct').value = kuechePctVal;
 
     persons = importedPersons;
