@@ -137,7 +137,11 @@
   <div class="card">
     <div class="row2">
       <div><label id="t-datum">Datum</label><input type="date" id="datum" /></div>
-      <div><label id="t-trinkgeld">Trinkgeld gesamt (€)</label><input type="number" id="trinkgeld" min="0" step="0.01" placeholder="0.00" oninput="calculate()" /></div>
+      <div>
+        <label id="t-trinkgeld">Trinkgeld gesamt (€)</label>
+        <input type="text" inputmode="decimal" id="trinkgeld" placeholder="z.B. 180 oder 100+50+30" oninput="calculate()" onblur="resolveFormula()" />
+        <div id="trinkgeld-resolved" style="font-size:12px;color:var(--text-muted);margin-top:4px;min-height:16px;"></div>
+      </div>
     </div>
     <div class="row2">
       <div><label id="t-kuechetax">Küche Tax (%)</label><input type="number" id="kuechePct" min="0" max="100" step="1" value="0" oninput="calculate()" /></div>
@@ -400,6 +404,7 @@ function applyLang() {
   // mode toggle buttons
   document.getElementById('mode-btn-time').innerHTML = t('modeTime');
   document.getElementById('mode-btn-hours').innerHTML = t('modeHours');
+  document.getElementById('trinkgeld').placeholder = lang === 'de' ? 'z.B. 180 oder 100+50+30' : 'e.g. 180 or 100+50+30';
   renderPersons();
   calculate();
 }
@@ -548,8 +553,36 @@ function addPerson() {
 }
 function removePerson(pi) { if(persons.length<=1)return; persons.splice(pi,1); renderPersons(); }
 
+function parseFormula(raw) {
+  if (!raw || !raw.trim()) return 0;
+  const s = raw.trim();
+  const expr = s.startsWith('=') ? s.slice(1) : s;
+  if (!/^[\d\s\+\-\*\/\.\,]+$/.test(expr)) return parseFloat(expr.replace(',', '.')) || 0;
+  try {
+    const safe = expr.replace(/,/g, '.');
+    const result = Function('"use strict"; return (' + safe + ')')();
+    return isFinite(result) && result >= 0 ? parseFloat(result.toFixed(2)) : 0;
+  } catch(e) { return 0; }
+}
+
+function resolveFormula() {
+  const input = document.getElementById('trinkgeld');
+  const resolved = document.getElementById('trinkgeld-resolved');
+  const raw = input.value.trim();
+  if (raw.startsWith('=') || /[\+\-\*\/]/.test(raw)) {
+    const val = parseFormula(raw);
+    resolved.textContent = val > 0 ? `= €${val.toFixed(2)}` : '';
+  } else {
+    resolved.textContent = '';
+  }
+}
+
+function getTrinkgeldValue() {
+  return parseFormula(document.getElementById('trinkgeld').value);
+}
+
 function getPayouts() {
-  const total = parseFloat(document.getElementById('trinkgeld').value)||0;
+  const total = getTrinkgeldValue();
   const kuechePct = parseFloat(document.getElementById('kuechePct').value)||0;
   const kuecheTax = parseFloat((total*kuechePct/100).toFixed(2));
   const servicePool = parseFloat((total-kuecheTax).toFixed(2));
@@ -571,6 +604,7 @@ function getPayouts() {
 }
 
 function calculate() {
+  resolveFormula();
   const {total, kuecheTax, servicePool, totalHours, perHour, payouts, totalRemainder, totalKuche} = getPayouts();
 
   document.getElementById('kuecheInfo').textContent = kuecheTax>0 ? `${t('kucheInfo')} €${kuecheTax.toFixed(2)}` : '';
